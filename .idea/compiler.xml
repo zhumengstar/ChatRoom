@@ -10,8 +10,6 @@
       <module name="com.chat.sample-foo.test" target="1.8" />
       <module name="com.chat.sample-server.main" target="1.8" />
       <module name="com.chat.sample-server.test" target="1.8" />
-      <module name="lib-clink.com.lib.main" target="1.8" />
-      <module name="lib-clink.com.lib.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>
