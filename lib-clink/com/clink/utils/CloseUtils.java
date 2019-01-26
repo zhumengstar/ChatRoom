@@ -3,13 +3,8 @@ package com.clink.utils;
 import java.io.Closeable;
 import java.io.IOException;
 
-/**
- * @author:zhumeng
- * @desc:
- **/
 public class CloseUtils {
     public static void close(Closeable... closeables) {
-
         if (closeables == null) {
             return;
         }

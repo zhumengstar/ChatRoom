@@ -1,7 +1,7 @@
 package server;
 
 import com.clink.utils.CloseUtils;
-import server.handle.ClientHandler1;
+import server.handle.ClientHandler;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -17,13 +17,13 @@ import java.util.concurrent.Executors;
  * @author:zhumeng
  * @desc:
  **/
-public class TCPServer implements ClientHandler1.ClientHandlerCallback {
+public class TCPServer implements ClientHandler.ClientHandlerCallback {
     private final int port;
     //nio监听
     private ClientListener listener;
 
     //线程安全，保证删除时，添加，遍历安全
-    private List<ClientHandler1> clientHandles = Collections.synchronizedList(new ArrayList<>());
+    private List<ClientHandler> clientHandles = Collections.synchronizedList(new ArrayList<>());
     private final ExecutorService forwardingThreadPollExecutor;
 
     //选择器
@@ -40,17 +40,16 @@ public class TCPServer implements ClientHandler1.ClientHandlerCallback {
 
     public boolean start() {
         try {
-
-
             selector = Selector.open();
             ServerSocketChannel server = ServerSocketChannel.open();
             //设置为非阻塞
             server.configureBlocking(false);
             //绑定本地端口
             server.socket().bind(new InetSocketAddress(port));
-            this.server = server;
             //注册客户端连接到达监听
             server.register(selector, SelectionKey.OP_ACCEPT);
+
+            this.server = server;
 
 
             System.out.println("服务器信息：" + server.getLocalAddress().toString());
@@ -78,7 +77,7 @@ public class TCPServer implements ClientHandler1.ClientHandlerCallback {
 
         //同步处理线程安全
         synchronized (TCPServer.this) {
-            for (ClientHandler1 clientHandle : clientHandles) {
+            for (ClientHandler clientHandle : clientHandles) {
                 clientHandle.exit();
             }
             clientHandles.clear();
@@ -87,23 +86,23 @@ public class TCPServer implements ClientHandler1.ClientHandlerCallback {
     }
 
     public synchronized void broadcast(String str) {
-        for (ClientHandler1 clientHandle : clientHandles) {
+        for (ClientHandler clientHandle : clientHandles) {
             clientHandle.send(str);
         }
     }
 
     @Override
-    public synchronized void onSelfClosed(ClientHandler1 handler) {
+    public synchronized void onSelfClosed(ClientHandler handler) {
         clientHandles.remove(handler);
     }
 
     @Override
-    public void onNewMessageArrive(final ClientHandler1 handler, final String msg) {
+    public void onNewMessageArrived(final ClientHandler handler, final String msg) {
         //打印到屏幕上
         System.out.println("Received-" + handler.getClientInfo() + ":" + msg);
         //异步提交转发任务
         forwardingThreadPollExecutor.execute(() -> {
-            for (ClientHandler1 clientHandler : clientHandles) {
+            for (ClientHandler clientHandler : clientHandles) {
 //                if (clientHandler.equals(handler)) {
 //                    //跳过自己
 //                    continue;
@@ -157,25 +156,22 @@ public class TCPServer implements ClientHandler1.ClientHandlerCallback {
                             SocketChannel socketChannel = serverSocketChannel.accept();
                             try {
                                 //客户端构建异步线程
-                                ClientHandler1 clientHandle = new ClientHandler1(socketChannel, TCPServer.this);
-                                //读取数据并打印
-                                clientHandle.readToPrint();
+                                ClientHandler clientHandler = new ClientHandler(socketChannel, TCPServer.this);
+                                System.out.println("//拿到非阻塞的客户端连接，可以进行客户端异步操作");
+
                                 synchronized (TCPServer.this) {
-                                    clientHandles.add(clientHandle);
+                                    clientHandles.add(clientHandler);
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 System.out.println("客户端连接异常" + e.getMessage());
                             }
                         }
-
                     }
-
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
-            while (!done);
+            } while (!done);
             System.out.println("服务器已关闭～");
         }
 
@@ -184,71 +180,5 @@ public class TCPServer implements ClientHandler1.ClientHandlerCallback {
             //唤醒当前的阻塞
             selector.wakeup();
         }
-
     }
-
-    //客户端消息处理
-//    private static class ClientHandle extends Thread {
-//        private Socket socket;
-//        private boolean flag = true;
-//
-//        ClientHandle(Socket socket) {
-//            this.socket = socket;
-//        }
-//
-//        @Override
-//        public void run() {
-//            super.run();
-//            System.out.println("新客户端连接：" + socket.getInetAddress() + "P:" + socket.getLocalPort());
-//
-//            try {
-//                //得到打印流，用于数据输出，服务器回送数据使用
-//                PrintStream socketOutput = new PrintStream(socket.getOutputStream());
-//                //得到输入流，用于接收数据
-//                BufferedReader socketInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-//
-//                do {
-//                    //客户端拿到数据
-//                    String str = socketInput.readLine();
-//                    if ("bye".equalsIgnoreCase(str)) {
-//                        flag = false;
-//                        //回送
-//                        System.out.println("bye");
-//                        socketOutput.println("bye");
-//
-//                    } else {
-//                        //打印到屏幕，并回送数据长度
-//                        if (str != null) {
-//                            System.out.println(str);
-//                        }
-//
-//                        //发回客户端
-//                        socketOutput.println("回送长度:" + str.length());
-//                    }
-//                } while (flag);
-//
-//                socketInput.close();
-//                socketOutput.close();
-//
-//            } catch (Exception e) {
-//                System.out.println("连接异常断开～");
-//            } finally {
-//                //连接关闭
-//                try {
-//                    socket.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            System.out.println("客户端已退出" + socket.getInetAddress() + "P:" + socket.getPort());
-//        }
-//
-//        public void exit(ClientHandle clientHandle) {
-//
-//        }
-//
-//        public void send(String str) {
-//
-//        }
-//    }
 }

@@ -1,6 +1,6 @@
-package server.handle;
+package server2;
 
-import com.clink.utils.CloseUtils;
+import com.clinke.utils.CloseUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -74,7 +74,7 @@ public class ClientHandler1 {
         void onSelfClosed(ClientHandler1 handler);
 
         //收到消息时侯通知
-        void onNewMessageArrive(ClientHandler1 handler, String msg);
+        void onNewMessageArrived(ClientHandler1 handler, String msg);
 
     }
 
@@ -130,7 +130,7 @@ public class ClientHandler1 {
                                 //丢弃换行符
                                 String str = new String(byteBuffer.array(), 0, read - 1);
                                 //通知到TCPServer
-                                clientHandlerCallback.onNewMessageArrive(ClientHandler1.this, str);
+                                clientHandlerCallback.onNewMessageArrived(ClientHandler1.this, str);
                             } else {
                                 System.out.println("客户端已无法读取数据");
                                 //退出客户端

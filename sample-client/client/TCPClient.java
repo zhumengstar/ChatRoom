@@ -1,7 +1,7 @@
 package client;
 
 import client.bean.ServerInfo;
-import com.clink.utils.CloseUtils;
+import com.clinke.utils.CloseUtils;
 
 import java.io.*;
 import java.net.Inet4Address;

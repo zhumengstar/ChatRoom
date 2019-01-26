@@ -1,33 +1,28 @@
 package com.clink.Impl;
 
+
+
 import com.clink.core.IoArgs;
 import com.clink.core.IoProvider;
 import com.clink.core.Receiver;
 import com.clink.core.Sender;
 import com.clink.utils.CloseUtils;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author:zhumeng
- * @desc:
- **/
-public class SocketChannelAdapter implements Sender, Receiver, Closeable {
+public class SocketChannelAdapter implements Sender, Receiver, Cloneable {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-
     private final SocketChannel channel;
-
     private final IoProvider ioProvider;
-
-    private final OnChannelStatusChangeListener listener;
+    private final OnChannelStatusChangedListener listener;
 
     private IoArgs.IoArgsEventListener receiveIoEventListener;
     private IoArgs.IoArgsEventListener sendIoEventListener;
 
-    public SocketChannelAdapter(SocketChannel channel, IoProvider ioProvider, OnChannelStatusChangeListener listener) throws IOException {
+    public SocketChannelAdapter(SocketChannel channel, IoProvider ioProvider,
+                                OnChannelStatusChangedListener listener) throws IOException {
         this.channel = channel;
         this.ioProvider = ioProvider;
         this.listener = listener;
@@ -38,78 +33,84 @@ public class SocketChannelAdapter implements Sender, Receiver, Closeable {
 
     @Override
     public boolean receiveAsync(IoArgs.IoArgsEventListener listener) throws IOException {
-
-        if (!isClosed.get()) {
-            throw new IOException("Current channel is closed.");
+        if (isClosed.get()) {
+            throw new IOException("Current channel is closed!");
         }
+
         receiveIoEventListener = listener;
 
-
-        return ioProvider.registerInput(channel, inputCallBack);
+        return ioProvider.registerInput(channel, inputCallback);
     }
 
     @Override
     public boolean sendAsync(IoArgs args, IoArgs.IoArgsEventListener listener) throws IOException {
-        if (!isClosed.get()) {
-            throw new IOException("Current channel is closed.");
+        if (isClosed.get()) {
+            throw new IOException("Current channel is closed!");
         }
+
         sendIoEventListener = listener;
-
-        //µ±«∞∑¢ÀÕµƒ ˝æ›∏Ωº”µΩªÿµ˜÷–
-        outputCallBack.setAttach(args);
-
-
-        return ioProvider.registerOutput(channel, outputCallBack);
+        // ÂΩìÂâçÂèëÈÄÅÁöÑÊï∞ÊçÆÈôÑÂä†Âà∞ÂõûË∞É‰∏≠
+        outputCallback.setAttach(args);
+        return ioProvider.registerOutput(channel, outputCallback);
     }
 
     @Override
     public void close() throws IOException {
         if (isClosed.compareAndSet(false, true)) {
+            // Ëß£Èô§Ê≥®ÂÜåÂõûË∞É
             ioProvider.unRegisterInput(channel);
             ioProvider.unRegisterOutput(channel);
-            //πÿ±’
+            // ÂÖ≥Èó≠
             CloseUtils.close(channel);
-            listener.OnChannelClosed(channel);
+            // ÂõûË∞ÉÂΩìÂâçChannelÂ∑≤ÂÖ≥Èó≠
+            listener.onChannelClosed(channel);
         }
     }
 
-    private final IoProvider.HandlerInputCallBack inputCallBack = new IoProvider.HandlerInputCallBack() {
+    private final IoProvider.HandlerInputCallback inputCallback = new IoProvider.HandlerInputCallback() {
         @Override
         protected void canProviderInput() {
             if (isClosed.get()) {
                 return;
             }
+
             IoArgs args = new IoArgs();
             IoArgs.IoArgsEventListener listener = SocketChannelAdapter.this.receiveIoEventListener;
 
             if (listener != null) {
                 listener.onStarted(args);
             }
+
             try {
-                //æﬂÃÂµƒ∂¡»°≤Ÿ◊˜
+                // ÂÖ∑‰ΩìÁöÑËØªÂèñÊìç‰Ωú
                 if (args.read(channel) > 0 && listener != null) {
+                    // ËØªÂèñÂÆåÊàêÂõûË∞É
                     listener.onCompleted(args);
                 } else {
                     throw new IOException("Cannot read any data!");
                 }
-            } catch (IOException e) {
+            } catch (IOException ignored) {
                 CloseUtils.close(SocketChannelAdapter.this);
             }
+
+
         }
     };
 
-    private final IoProvider.HandlerOutputCallBack outputCallBack = new IoProvider.HandlerOutputCallBack() {
+
+    private final IoProvider.HandlerOutputCallback outputCallback = new IoProvider.HandlerOutputCallback() {
         @Override
         protected void canProviderOutput(Object attach) {
             if (isClosed.get()) {
                 return;
             }
-            //TODO
+            // TODO
             sendIoEventListener.onCompleted(null);
         }
     };
 
-    public interface OnChannelStatusChangeListener {
-        void OnChannelClosed(SocketChannel channel);
+
+    public interface OnChannelStatusChangedListener {
+        void onChannelClosed(SocketChannel channel);
     }
 }

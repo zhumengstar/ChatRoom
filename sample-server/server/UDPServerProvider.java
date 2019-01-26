@@ -16,8 +16,6 @@ public class UDPServerProvider {
 
     private static Provider PROVIDER_INSTANCE;
 
-    public UDPServerProvider() {
-    }
 
     public static void start(int portServer) {
         stop();
@@ -45,7 +43,7 @@ public class UDPServerProvider {
         //存储消息的buffer
         final byte[] buffer = new byte[128];
 
-        public Provider(String sn, int port) {
+        Provider(String sn, int port) {
             super();
             this.sn = sn.getBytes();
             this.port = port;
@@ -78,6 +76,7 @@ public class UDPServerProvider {
                     System.out.println("ServerProvider receiver from ip:" + clientIp + "\tport:" + clientPort + "\tdataValid:" + isValid);
 
                     if (!isValid) {
+                        //无效继续
                         continue;
                     }
                     //解析命令与回送端口

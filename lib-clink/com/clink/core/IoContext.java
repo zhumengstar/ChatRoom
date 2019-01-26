@@ -1,20 +1,12 @@
 package com.clink.core;
 
-import java.io.Closeable;
 import java.io.IOException;
 
-/**
- * @author:zhumeng
- * @desc:
- **/
-public class IoContext implements Closeable {
-    //单例静态
+public class IoContext {
     private static IoContext INSTANCE;
-
-    //针对全局连接
     private final IoProvider ioProvider;
 
-    public IoContext(IoProvider ioProvider) {
+    private IoContext(IoProvider ioProvider) {
         this.ioProvider = ioProvider;
     }
 
@@ -30,18 +22,24 @@ public class IoContext implements Closeable {
         return new StartedBoot();
     }
 
-    @Override
-    public void close() throws IOException {
+    public static void close() throws IOException {
+        if (INSTANCE != null) {
+            INSTANCE.callClose();
+        }
+    }
+
+    private void callClose() throws IOException {
         ioProvider.close();
     }
 
-    private static class StartedBoot {
+    public static class StartedBoot {
         private IoProvider ioProvider;
 
-        public StartedBoot() {
+        private StartedBoot() {
+
         }
 
-        public StartedBoot ioPrivoder(IoProvider ioProvider) {
+        public StartedBoot ioProvider(IoProvider ioProvider) {
             this.ioProvider = ioProvider;
             return this;
         }
@@ -51,5 +49,4 @@ public class IoContext implements Closeable {
             return INSTANCE;
         }
     }
-
 }

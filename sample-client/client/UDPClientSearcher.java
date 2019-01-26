@@ -1,7 +1,7 @@
 package client;
 
 import client.bean.ServerInfo;
-import com.clink.utils.ByteUtils;
+import com.clinke.utils.ByteUtils;
 import constants.UDPConstants;
 
 import java.io.IOException;
