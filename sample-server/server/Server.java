@@ -8,7 +8,10 @@ import java.io.InputStreamReader;
 
 /**
  * @author:zhumeng
- * @desc:
+ * @desc: 阻塞->异步   麻烦，不可能
+ * 异步->等待   容易，线程锁
+ * <p>
+ * 　异步当同步，未体现NIO
  **/
 public class Server {
     public static void main(String[] args) throws IOException {

@@ -1,14 +1,5 @@
-
 /gradlew
 /gradlew.bat
-
 /.idea/
 /.gradle/
 /out/
-/*/gradlew
-/*/gradlew.bat
-/*/.idea/
-/*/src/test/
-/*/src/main/resources/
-/*/.gradle/
-/*/gradle/

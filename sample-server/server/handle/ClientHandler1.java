@@ -15,14 +15,14 @@ import java.util.concurrent.Executors;
  * @author:zhumeng
  * @desc:
  **/
-public class ClientHandler {
+public class ClientHandler1 {
     private SocketChannel socketChannel;
     private final ClientReadHandler readHandler;
     private final ClientWriteHandler writeHandler;
     private final ClientHandlerCallback clientHandlerCallback;
     private final String clientInfo;
 
-    public ClientHandler(SocketChannel socketChannel, ClientHandlerCallback clientHandlerCallback) throws IOException {
+    public ClientHandler1(SocketChannel socketChannel, ClientHandlerCallback clientHandlerCallback) throws IOException {
         this.socketChannel = socketChannel;
         //设置非阻塞模式
         socketChannel.configureBlocking(false);
@@ -71,10 +71,10 @@ public class ClientHandler {
 
     public interface ClientHandlerCallback {
         //自身关闭通知
-        void onSelfClosed(ClientHandler handler);
+        void onSelfClosed(ClientHandler1 handler);
 
         //收到消息时侯通知
-        void onNewMessageArrive(ClientHandler handler, String msg);
+        void onNewMessageArrive(ClientHandler1 handler, String msg);
 
     }
 
@@ -110,6 +110,7 @@ public class ClientHandler {
                         }
                         continue;
                     }
+
                     Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
                     while (iterator.hasNext()) {
                         if (done) {
@@ -129,11 +130,11 @@ public class ClientHandler {
                                 //丢弃换行符
                                 String str = new String(byteBuffer.array(), 0, read - 1);
                                 //通知到TCPServer
-                                clientHandlerCallback.onNewMessageArrive(ClientHandler.this, str);
+                                clientHandlerCallback.onNewMessageArrive(ClientHandler1.this, str);
                             } else {
                                 System.out.println("客户端已无法读取数据");
                                 //退出客户端
-                                ClientHandler.this.exitBySelf();
+                                ClientHandler1.this.exitBySelf();
                                 break;
                             }
                         }
@@ -143,7 +144,7 @@ public class ClientHandler {
             } catch (Exception e) {
                 if (!done) {
                     System.out.println("连接异常断开～");
-                    ClientHandler.this.exitBySelf();
+                    ClientHandler1.this.exitBySelf();
                 }
             } finally {
                 CloseUtils.close(selector);
@@ -214,7 +215,7 @@ public class ClientHandler {
 //                        write=0是合法的
                         if (write < 0) {
                             System.out.println("客户端已无法发送数据");
-                            ClientHandler.this.exitBySelf();
+                            ClientHandler1.this.exitBySelf();
                         }
 
                     } catch (Exception e) {
